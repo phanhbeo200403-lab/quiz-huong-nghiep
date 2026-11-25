@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trắc nghiệm hướng nghiệp</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#f3f5fa;color:#25334b;font-family:Arial,sans-serif}
+.app{max-width:760px;margin:auto}
+.card{background:white;border:1px solid #e1e6ef;border-radius:15px;padding:20px;margin:14px 0}
+h1{font-size:24px}h2{font-size:19px}
+.muted{color:#68758a;font-size:14px;line-height:1.6}
+input[type=text]{width:100%;padding:12px;border:1px solid #ccd5e3;border-radius:8px;margin:7px 0 15px;font-size:16px}
+button{padding:12px 17px;border:0;border-radius:9px;background:#365fbd;color:white;font-weight:bold;cursor:pointer;font-size:15px}
+button.secondary{background:white;color:#25334b;border:1px solid #ccd5e3}
+button:disabled{opacity:.4}
+.option{display:flex;gap:10px;padding:13px;border:1px solid #dce2ec;border-radius:10px;margin:8px 0;cursor:pointer;line-height:1.5}
+.option:has(input:checked){border-color:#365fbd;background:#eef3ff}
+.bar{height:9px;background:#e7ebf2;border-radius:20px;overflow:hidden}
+.fill{height:100%;background:#365fbd}
+.hidden{display:none!important}
+.row{display:flex;gap:10px}
+.row button{flex:1}
+.score{display:flex;justify-content:space-between;font-size:14px;margin:10px 0 5px}
+@media(max-width:520px){body{padding:10px}.card{padding:15px}.row{flex-direction:column}}
+@media print{body{background:white}.no-print{display:none!important}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main class="app">
+
+<div class="card">
+<div style="font-size:30px">🧭</div>
+<h1>Khám phá bản thân – Chọn nghề tương lai</h1>
+<p class="muted">16 câu hỏi · 6 nhóm sở thích nghề nghiệp</p>
+</div>
+
+<section id="intro" class="card">
+<h2>Thông tin học sinh</h2>
+<label>Họ và tên *<input type="text" id="name" placeholder="Nhập họ và tên"></label>
+<label>Trường học *<input type="text" id="school" placeholder="Nhập tên trường"></label>
+<label>Lớp *<input type="text" id="className" placeholder="Ví dụ: 12A1"></label>
+<p class="muted">Hãy chọn phương án gần nhất với sở thích và cách hành động của bạn. Không có đáp án đúng hay sai.</p>
+<button id="start">Bắt đầu làm bài →</button>
+</section>
+
+<section id="quiz" class="hidden">
+<div class="card">
+<div class="score"><b id="counter"></b><span id="percent" class="muted"></span></div>
+<div class="bar"><div id="progress" class="fill"></div></div>
+</div>
+<div class="card">
+<p class="muted">Câu hỏi khám phá sở thích</p>
+<h2 id="question"></h2>
+<div id="options"></div>
+<p id="warning" class="hidden" style="color:#c33">Bạn hãy chọn một phương án nhé!</p>
+</div>
+<div class="row no-print">
+<button class="secondary" id="back">← Quay lại</button>
+<button id="next">Câu tiếp theo →</button>
+</div>
+</section>
+
+<section id="result" class="hidden">
+<div class="card">
+<p class="muted">BÁO CÁO KẾT QUẢ</p>
+<h2 id="student"></h2>
+<p id="schoolclass" class="muted"></p>
+<p class="muted">Kết quả phản ánh xu hướng sở thích nghề nghiệp qua 16 lựa chọn.</p>
+</div>
+<div class="card"><h2>Top 3 nhóm nổi bật</h2><div id="top"></div></div>
+<div class="card"><h2>Biểu đồ 6 nhóm sở thích</h2><div id="scores"></div></div>
+<div class="card"><h2>Gợi ý ngành nghề tham khảo</h2><div id="jobs"></div></div>
+<div class="card">
+<h3>Lưu ý</h3>
+<p class="muted">Đây là công cụ tham khảo xu hướng sở thích, không phải kết luận nghề nghiệp hay đánh giá năng lực. Hãy kết hợp kết quả với học lực, năng lực và trải nghiệm thực tế.</p>
+</div>
+<div class="card no-print">
+<button id="email" style="width:100%">✉ Gửi báo cáo qua Gmail</button>
+<p class="muted">Gmail sẽ mở thư đã điền sẵn. Học sinh cần nhấn nút Gửi để hoàn tất.</p>
+<button class="secondary" id="print" style="width:100%;margin-top:8px">In / Lưu báo cáo PDF</button>
+<button class="secondary" id="restart" style="width:100%;margin-top:8px">Làm lại bài trắc nghiệm</button>
+</div>
+</section>
+
+</main>
+
+<script>
+const groups=[
+{key:"A",name:"Thực tế (R)",desc:"Thích hành động, thao tác và tạo ra sản phẩm cụ thể.",jobs:"Kỹ thuật cơ khí, kỹ thuật điện, tự động hóa, xây dựng, công nghệ kỹ thuật, nông nghiệp công nghệ cao."},
+{key:"B",name:"Nghiên cứu (I)",desc:"Thích tìm hiểu, phân tích, khám phá và giải quyết vấn đề.",jobs:"Khoa học dữ liệu, công nghệ thông tin, nghiên cứu khoa học, y sinh, dược học, phân tích dữ liệu."},
+{key:"C",name:"Nghệ thuật (A)",desc:"Thích sáng tạo, thể hiện ý tưởng và có không gian tự do.",jobs:"Thiết kế đồ họa, truyền thông, sáng tạo nội dung, kiến trúc, mỹ thuật, sản xuất phim."},
+{key:"D",name:"Xã hội (S)",desc:"Thích giao tiếp, hỗ trợ, hướng dẫn và làm việc với con người.",jobs:"Giáo dục, tâm lý học, công tác xã hội, điều dưỡng, nhân sự, tư vấn và chăm sóc khách hàng."},
+{key:"E",name:"Quản lý/Kinh doanh (E)",desc:"Thích lãnh đạo, thuyết phục, tổ chức và hướng tới mục tiêu.",jobs:"Quản trị kinh doanh, marketing, luật, quản trị nhân lực, kinh doanh quốc tế, khởi nghiệp."},
+{key:"F",name:"Nghiệp vụ/Quy củ (C)",desc:"Thích sự rõ ràng, chính xác, hệ thống và quy trình.",jobs:"Kế toán, kiểm toán, tài chính, ngân hàng, logistics, quản trị văn phòng, phân tích nghiệp vụ."}
+];
+
+const questions=[
+["Nếu được tự chọn một hoạt động ngoại khóa, bạn muốn tham gia hoạt động nào nhất?",["Chế tạo, lắp ráp hoặc sửa chữa một sản phẩm.","Thử nghiệm, khám phá một vấn đề khoa học.","Vẽ tranh, thiết kế hoặc sáng tạo sản phẩm nghệ thuật.","Tham gia hoạt động thiện nguyện, giúp đỡ mọi người.","Tổ chức một cuộc thi hoặc sự kiện.","Quản lý hồ sơ, ghi chép và sắp xếp công việc."]],
+["Khi làm bài tập nhóm, bạn thường thích đảm nhận việc gì?",["Thực hiện phần thực hành, tạo sản phẩm.","Tìm hiểu thông tin và phân tích vấn đề.","Đề xuất ý tưởng và cách trình bày sáng tạo.","Hỗ trợ các thành viên, kết nối mọi người.","Phân công nhiệm vụ và điều phối nhóm.","Ghi chép, tổng hợp và kiểm tra kết quả."]],
+["Trong ngày rảnh, hoạt động nào khiến bạn thấy hứng thú nhất?",["Chơi thể thao hoặc làm đồ thủ công.","Đọc sách, tìm hiểu kiến thức mới.","Vẽ, viết, chụp ảnh hoặc chơi nhạc.","Gặp gỡ bạn bè hoặc giúp đỡ người khác.","Kinh doanh thử hoặc tham gia thử thách.","Sắp xếp góc học tập, lập kế hoạch cá nhân."]],
+["Bạn cảm thấy hào hứng nhất khi học theo cách nào?",["Được thực hành và tạo ra sản phẩm.","Được giải thích bản chất, quy luật của vấn đề.","Được tự do thể hiện ý tưởng.","Được thảo luận và học cùng mọi người.","Được tranh luận, trình bày quan điểm.","Nội dung rõ ràng, bài tập có hệ thống."]],
+["Khi gặp một vấn đề khó, bạn thường muốn làm gì trước?",["Thử nghiệm các cách giải quyết khác nhau.","Phân tích nguyên nhân và tìm bằng chứng.","Nghĩ ra một ý tưởng sáng tạo.","Hỏi ý kiến và trao đổi với mọi người.","Chọn hướng giải quyết và thuyết phục người khác.","Lập các bước cụ thể để xử lý vấn đề."]],
+["Bạn thích kiểu công việc nào nhất?",["Làm việc với máy móc, thiết bị hoặc vật liệu.","Nghiên cứu, phân tích và khám phá.","Sáng tạo nội dung hoặc thiết kế.","Giao tiếp, hướng dẫn hoặc chăm sóc người khác.","Kinh doanh, đàm phán hoặc quản lý.","Làm việc với hồ sơ, dữ liệu và con số."]],
+["Nếu được chọn một dự án để tham gia, bạn chọn dự án nào?",["Chế tạo một thiết bị hoặc mô hình.","Nghiên cứu một hiện tượng hoặc vấn đề.","Sản xuất ảnh, video hoặc sản phẩm sáng tạo.","Tổ chức chương trình hỗ trợ học sinh.","Xây dựng một ý tưởng kinh doanh.","Thiết kế hệ thống quản lý công việc."]],
+["Mọi người thường tìm đến bạn để nhờ việc gì?",["Sửa chữa hoặc hướng dẫn thao tác.","Giải thích kiến thức hoặc tìm lời giải.","Góp ý ý tưởng hoặc thẩm mỹ.","Lắng nghe và đưa ra lời khuyên.","Thuyết phục, tổ chức hoặc dẫn dắt.","Sắp xếp, kiểm tra hoặc tính toán."]],
+["Bạn mong muốn môi trường làm việc tương lai như thế nào?",["Thực tế, trực tiếp và có nhiều hoạt động.","Nghiên cứu, học hỏi chuyên sâu.","Tự do, linh hoạt và sáng tạo.","Có sự tương tác và đóng góp cho cộng đồng.","Năng động, cạnh tranh và có cơ hội thăng tiến.","Ổn định, có quy trình và kế hoạch rõ ràng."]],
+["Bạn cảm thấy tự hào nhất khi đạt được điều gì?",["Tạo ra một sản phẩm hoạt động tốt.","Tìm được lời giải cho vấn đề khó.","Tạo ra tác phẩm mang dấu ấn riêng.","Giúp người khác tiến bộ hoặc tốt hơn.","Đạt được mục tiêu và dẫn dắt thành công.","Hoàn thành công việc chính xác, khoa học."]],
+["Nếu tham gia một cuộc thi, bạn muốn chọn lĩnh vực nào?",["Robot, kỹ thuật hoặc mô hình.","Toán, khoa học hoặc nghiên cứu.","Văn học, mỹ thuật hoặc video.","Hùng biện xã hội hoặc hoạt động cộng đồng.","Khởi nghiệp hoặc tranh biện kinh doanh.","Tin học ứng dụng, thống kê hoặc lập kế hoạch."]],
+["Khi đưa ra quyết định, yếu tố nào quan trọng nhất với bạn?",["Khả năng thực hiện trong thực tế.","Dữ kiện, logic và phân tích.","Cảm hứng và góc nhìn cá nhân.","Tác động đến những người liên quan.","Mục tiêu, cơ hội và kết quả.","Quy định, kế hoạch và thông tin đầy đủ."]],
+["Bạn thích cách làm việc nào hơn?",["Thao tác và thực hành trực tiếp.","Làm việc độc lập để nghiên cứu.","Làm việc linh hoạt, tự do sáng tạo.","Hợp tác và trao đổi với mọi người.","Dẫn dắt và đưa ra quyết định.","Làm theo quy trình và tiêu chuẩn."]],
+["Lĩnh vực nào khiến bạn quan tâm nhất?",["Cơ khí, xây dựng, điện hoặc công nghệ kỹ thuật.","Y sinh, khoa học dữ liệu hoặc khoa học tự nhiên.","Thiết kế, nghệ thuật hoặc truyền thông.","Giáo dục, tâm lý hoặc chăm sóc sức khỏe.","Kinh doanh, luật hoặc quản trị.","Kế toán, tài chính hoặc logistics."]],
+["Bạn không thích điều gì nhất trong học tập hoặc công việc?",["Phải ngồi một chỗ, ít được thực hành.","Không được tìm hiểu sâu hoặc tư duy.","Mọi thứ quá khuôn mẫu, cứng nhắc.","Ít tương tác, không được hỗ trợ ai.","Không được chủ động hoặc phát triển.","Thiếu quy trình, mọi thứ lộn xộn."]],
+["Hãy hình dung bản thân sau 10 năm, bạn muốn điều gì nhất?",["Giỏi một chuyên môn thực hành và tạo ra sản phẩm tốt.","Trở thành chuyên gia có kiến thức chuyên sâu.","Có sự nghiệp sáng tạo và dấu ấn cá nhân.","Làm công việc có ích cho con người.","Điều hành dự án hoặc doanh nghiệp.","Có chuyên môn vững và công việc ổn định."]]
+];
+
+let answers=Array(16).fill(null),index=0,student={};
+const $=id=>document.getElementById(id);
+function show(id){["intro","quiz","result"].forEach(x=>$(x).classList.toggle("hidden",x!==id))}
+function ranking(){return groups.map(g=>({...g,score:answers.filter(a=>a===g.key).length})).sort((a,b)=>b.score-a.score||a.key.localeCompare(b.key))}
+function render(){
+const [q,opts]=questions[index];
+$("counter").textContent=`Câu ${index+1}/16`;
+$("percent").textContent=Math.round((index+1)/16*100)+"%";
+$("progress").style.width=(index+1)/16*100+"%";
+$("question").textContent=q;
+$("options").replaceChildren();
+opts.forEach((o,i)=>{
+const label=document.createElement("label");label.className="option";
+const radio=document.createElement("input");radio.type="radio";radio.name="answer";radio.value=groups[i].key;radio.checked=answers[index]===radio.value;
+radio.onchange=()=>{answers[index]=radio.value;$("warning").classList.add("hidden")};
+const text=document.createElement("span");text.textContent=String.fromCharCode(65+i)+". "+o;
+label.append(radio,text);$("options").append(label);
+});
+$("back").disabled=index===0;
+$("next").textContent=index===15?"Xem kết quả":"Câu tiếp theo →";
+$("warning").classList.add("hidden");
+}
+function report(){
+const rank=ranking();
+return [
+"BÁO CÁO TRẮC NGHIỆM ĐỊNH HƯỚNG NGHỀ NGHIỆP",
+"Họ và tên: "+student.name,
+"Trường: "+student.school,
+"Lớp: "+student.className,
+"",
+"TOP 3 NHÓM NỔI BẬT:",
+...rank.slice(0,3).map((g,i)=>`${i+1}. ${g.name}: ${g.score}/16 điểm – ${g.desc}`),
+"",
+"KẾT QUẢ 6 NHÓM:",
+...rank.map(g=>`${g.name}: ${g.score}/16 điểm`),
+"",
+"GỢI Ý NGÀNH NGHỀ:",
+...rank.slice(0,3).map(g=>g.name+": "+g.jobs),
+"",
+"CÂU TRẢ LỜI:",
+...questions.map(([q,o],i)=>`${i+1}. ${q}\n${answers[i]}. ${o[groups.findIndex(g=>g.key===answers[i])]}`),
+"",
+"Kết quả chỉ mang tính tham khảo."
+].join("\n");
+}
+function finish(){
+const rank=ranking();show("result");
+$("student").textContent=student.name;
+$("schoolclass").textContent=`Trường: ${student.school} · Lớp: ${student.className}`;
+$("top").replaceChildren();
+rank.slice(0,3).forEach((g,i)=>{
+const div=document.createElement("div");div.className="card";
+const b=document.createElement("b");b.textContent=`${i+1}. ${g.name} – ${g.score}/16 điểm`;
+const p=document.createElement("p");p.className="muted";p.textContent=g.desc;
+div.append(b,p);$("top").append(div);
+});
+$("scores").replaceChildren();
+rank.forEach(g=>{
+const label=document.createElement("div");label.className="score";
+const name=document.createElement("span");name.textContent=g.name;
+const score=document.createElement("b");score.textContent=g.score+"/16";
+label.append(name,score);
+const bar=document.createElement("div");bar.className="bar";
+const fill=document.createElement("div");fill.className="fill";fill.style.width=(g.score/16*100)+"%";
+bar.append(fill);$("scores").append(label,bar);
+});
+$("jobs").replaceChildren();
+rank.slice(0,3).forEach(g=>{
+const p=document.createElement("p");
+const b=document.createElement("b");b.textContent=g.name;
+const span=document.createElement("span");span.className="muted";span.textContent=g.jobs;
+p.append(b,document.createElement("br"),span);$("jobs").append(p);
+});
+}
+$("start").onclick=()=>{
+student={name:$("name").value.trim(),school:$("school").value.trim(),className:$("className").value.trim()};
+if(!student.name||!student.school||!student.className){alert("Vui lòng nhập đầy đủ họ tên, trường học và lớp.");return}
+index=0;show("quiz");render();
+};
+$("back").onclick=()=>{if(index>0){index--;render()}};
+$("next").onclick=()=>{
+if(!answers[index]){$("warning").classList.remove("hidden");return}
+if(index<15){index++;render()}else finish();
+};
+$("email").onclick=()=>{
+const url="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent("phanhbeo200403@gmail.com")+"&su="+encodeURIComponent("Báo cáo trắc nghiệm hướng nghiệp - "+student.name)+"&body="+encodeURIComponent(report());
+window.open(url,"_blank");
+};
+$("print").onclick=()=>window.print();
+$("restart").onclick=()=>{
+if(confirm("Bạn muốn làm lại bài trắc nghiệm?")){
+answers=Array(16).fill(null);index=0;
+["name","school","className"].forEach(x=>$(x).value="");
+show("intro");
+}
+};
+</script>
+</body>
+</html>
